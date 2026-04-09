@@ -28,37 +28,64 @@ router.hooks({
     // Add a switch case statement to handle multiple routes
     switch (view) {
       // Add a case for each view that needs data from an API
+      // New Case for the Home View
+      case "home":
+        axios
+          // Get request to retrieve the current weather data using the API key and providing a city name
+          .get(
+            `https://api.openweathermap.org/data/2.5/weather?appid=${process.env.OPEN_WEATHER_MAP_API_KEY}&units=imperial&q=st%20louis`
+          )
+          .then(response => {
+            // Create an object to be stored in the Home state from the response
+            store.home.weather = {
+              city: response.data.name,
+              temp: response.data.main.temp,
+              feelsLike: response.data.main.feels_like,
+              description: response.data.weather[0].main
+            };
+            done();
+          })
+          .catch(err => {
+            console.log(err);
+            done();
+          });
+        break;
+
       case "pizza":
         // New Axios get request utilizing already made environment variable
         axios
-          .get(`https://sc-pizza-api.onrender.com/pizzas`)
+          .get(`${process.env.PIZZA_PLACE_API_URL}/pizzas`)
           .then(response => {
             // We need to store the response to the state, in the next step but in the meantime let's see what it looks like so that we know what to store from the response.
             console.log("response", response);
+
+            // Storing retrieved data in state
+            // The dot chain variable access represents the following {storeFolder.stateFileViewName.objectAttribute}represents
+            store.pizza.pizzas = response.data;
             done();
           })
-          .catch((error) => {
+          .catch(error => {
             console.log("It puked", error);
             done();
           });
-          break;
-      default :
+        break;
+      default:
         // We must call done for all views so we include default for the views that don't have cases above.
         done();
-        // break is not needed since it is the last condition, if you move default higher in the stack then you should add the break statement.
+      // break is not needed since it is the last condition, if you move default higher in the stack then you should add the break statement.
     }
   },
-  already: (match) => {
+  already: match => {
     const view = match?.data?.view ? camelCase(match.data.view) : "home";
 
     render(store[view]);
   },
-  after: (match) => {
+  after: match => {
     router.updatePageLinks();
 
     // add menu toggle to bars icon in nav bar
     document.querySelector(".fa-bars").addEventListener("click", () => {
-        document.querySelector("nav > ul").classList.toggle("hidden--mobile");
+      document.querySelector("nav > ul").classList.toggle("hidden--mobile");
     });
   }
 });
